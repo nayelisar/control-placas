@@ -16,7 +16,7 @@ inicializar_base_datos()
 
 # Título de la app
 st.title("🚗 Control de Placas Independiente")
-st.write("Versión de consulta y registro avanzada. Funciona desde cualquier celular.")
+st.write("Funciona desde cualquier celular.")
 
 # --- SECCIÓN 1: VERIFICAR PLACA ---
 st.header("Verificar Placa")
