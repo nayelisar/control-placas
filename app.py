@@ -16,7 +16,7 @@ inicializar_base_datos()
 
 # Título de la app
 st.title("🚗 Control de Placas Independiente")
-st.write("Funciona desde cualquier celular.")
+st.write("Versión de consulta y registro avanzada. Funciona desde cualquier celular.")
 
 # --- SECCIÓN 1: VERIFICAR PLACA ---
 st.header("Verificar Placa")
@@ -102,3 +102,21 @@ with st.expander("➕ Registrar Nuevo Vehículo"):
                 st.rerun()
         else:
             st.error("El campo 'Número de Placa' no puede quedar vacío.")
+
+#  VER TODAS LAS PLACAS REGISTRADAS (PUNTO 2) ---
+st.markdown("---")
+with st.expander("📋 Ver Lista de Placas Registradas"):
+    st.write("Aquí puedes ver todos los vehículos que están autorizados actualmente:")
+    
+    # Mostramos la base de datos en forma de tabla interactiva en la pantalla
+    st.dataframe(df_base, use_container_width=True)
+    
+    # Botón de seguridad para descargar el archivo actualizado
+    csv_data = df_base.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label="📥 Descargar Base de Datos (CSV)",
+        data=csv_data,
+        file_name="base_placas.csv",
+        mime="text/csv",
+        help="Haz clic aquí para descargar y respaldar tu lista de placas en tu celular o computadora."
+    )
