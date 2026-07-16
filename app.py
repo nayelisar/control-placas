@@ -6,6 +6,9 @@ import os
 ARCHIVO_DB = "base_placas.csv"
 FOTO_POR_DEFECTO = "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?q=80&w=400&auto=format&fit=crop"
 
+# 🔑 DEFINE AQUÍ TU CONTRASEÑA DE ADMINISTRADOR
+CONTRASENA_ADMIN = "ICE.01" 
+
 # 1. Inicializar la base de datos con las 5 columnas requeridas
 def inicializar_base_datos():
     if not os.path.exists(ARCHIVO_DB):
@@ -23,7 +26,6 @@ st.header("Verificar Placa")
 
 try:
     df_base = pd.read_csv(ARCHIVO_DB)
-    # Limpiamos espacios y aseguramos que todo esté en mayúsculas para evitar fallos
     df_base["Placas"] = df_base["Placas"].astype(str).str.strip().str.upper()
 except Exception as e:
     st.error(f"Error al leer la base de datos local: {e}")
@@ -41,7 +43,6 @@ if st.button("Verificar Acceso", type="primary"):
             st.subheader("📋 Datos del Vehículo")
             datos_auto = vehiculo_encontrado.iloc[0]
             
-            # Extraer características controlando celdas vacías
             tipo = datos_auto.get("Tipo", "No especificado")
             color = datos_auto.get("Color", "No especificado")
             estado = datos_auto.get("Estado", "No especificado")
@@ -50,7 +51,6 @@ if st.button("Verificar Acceso", type="primary"):
             if pd.isna(url_foto) or str(url_foto).strip() == "":
                 url_foto = FOTO_POR_DEFECTO
                 
-            # Diseño en dos columnas para el celular
             col_datos, col_foto = st.columns([1, 1])
             with col_datos:
                 st.write(f"**🚘 Tipo:** {tipo}")
@@ -69,7 +69,6 @@ st.markdown("---")
 with st.expander("➕ Registrar Nuevo Vehículo"):
     st.write("Llena los campos para añadir un auto a la lista permitida:")
     
-    # Formulario de entrada
     nueva_placa = st.text_input("Número de Placa (Obligatorio):").strip().upper()
     nuevo_tipo = st.text_input("Tipo / Marca de Auto (Ej. Ford Explorer):").strip()
     nuevo_color = st.text_input("Color del Vehículo:").strip()
@@ -78,14 +77,11 @@ with st.expander("➕ Registrar Nuevo Vehículo"):
 
     if st.button("Guardar Registro"):
         if nueva_placa:
-            # Comprobar si ya existe para evitar duplicados
             if nueva_placa in df_base["Placas"].values:
                 st.warning(f"La placa {nueva_placa} ya se encuentra registrada en el sistema.")
             else:
-                # Si no hay foto, dejar celda vacía para usar el respaldo por defecto
                 foto_guardar = nueva_foto if nueva_foto else ""
                 
-                # Crear nueva fila
                 nueva_fila = pd.DataFrame([{
                     "Placas": nueva_placa,
                     "Tipo": nuevo_tipo,
@@ -94,29 +90,32 @@ with st.expander("➕ Registrar Nuevo Vehículo"):
                     "Foto": foto_guardar
                 }])
                 
-                # Guardar al final del archivo CSV sin alterar el resto
                 nueva_fila.to_csv(ARCHIVO_DB, mode='a', header=False, index=False)
                 st.success(f"✅ ¡Excelente! Vehículo con placas {nueva_placa} registrado con éxito.")
-                
-                # Forzar recarga ligera para actualizar la lista en memoria
                 st.rerun()
         else:
             st.error("El campo 'Número de Placa' no puede quedar vacío.")
 
-#  VER TODAS LAS PLACAS REGISTRADAS (PUNTO 2) ---
+# --- SECCIÓN 3: PANEL DE ADMINISTRACIÓN PROTEGIDO ---
 st.markdown("---")
-with st.expander("📋 Ver Lista de Placas Registradas"):
-    st.write("Aquí puedes ver todos los vehículos que están autorizados actualmente:")
+st.subheader("🔐 Panel de Administración")
+
+# Entrada de contraseña (oculta los caracteres con asteriscos)
+password_ingresado = st.text_input("Introduce la contraseña para ver la lista:", type="password")
+
+if password_ingresado == CONTRASENA_ADMIN:
+    st.success("🔓 Acceso concedido como Administrador.")
     
-    # Mostramos la base de datos en forma de tabla interactiva en la pantalla
-    st.dataframe(df_base, use_container_width=True)
-    
-    # Botón de seguridad para descargar el archivo actualizado
-    csv_data = df_base.to_csv(index=False).encode('utf-8')
-    st.download_button(
-        label="📥 Descargar Base de Datos (CSV)",
-        data=csv_data,
-        file_name="base_placas.csv",
-        mime="text/csv",
-        help="Haz clic aquí para descargar y respaldar tu lista de placas en tu celular o computadora."
-    )
+    with st.expander("📋 Ver Lista de Placas Registradas (Solo Tú)"):
+        st.write("Aquí puedes ver todos los vehículos autorizados actualmente:")
+        st.dataframe(df_base, use_container_width=True)
+        
+        csv_data = df_base.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="📥 Descargar Base de Datos (CSV)",
+            data=csv_data,
+            file_name="base_placas.csv",
+            mime="text/csv"
+        )
+elif password_ingresado != "":
+    st.error("❌ Contraseña incorrecta. Inténtalo de nuevo.")
